@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script
+      src="https://cdn.socket.io/4.5.0/socket.io.min.js"
+      integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k"
+      crossorigin="anonymous"
+    ></script>
+
+    <style>
+      html,
+      body {
+        height: 100%;
+        padding: 20px
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      #chat {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid #ddd;
+        height: 50px;
+        padding: 0 20px;
+        font-size: 14px;
+      }
+
+      button {
+        width: 100%;
+        height: 50px;
+        font-size: 14px;
+        background: #069;
+        text-align: center;
+        line-height: 50px;
+        font-weight: bold;
+        color: #fff;
+        margin-top: 10px;
+      }
+
+      .messages {
+        width: 100%;
+        height: 400px;
+        margin: 20px 0;
+        border: 1px solid #ddd;
+        padding: 20px;
+        overflow-y: scroll;
+      }
+      .message {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      }
+      .date {
+        font-size: 11px;
+        text-align: end;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="chat">
+      <input type="text" name="username" placeholder="Digite seu usário" />
+      <div class="messages"></div>
+      <input type="text" name="message" placeholder="Digite sua mensagem" />
+      <button type="submit">Enviar</button>
+
+      <script type="text/javascript">
+        var socket = io("http://localhost:3000");
+
+        function renderMessage(message) {
+          const createdAt = new Date(message.createdAt);
+          $(".messages").append(
+            '<div class="message">' +
+              "<div class='date'>" +
+              `${createdAt.getDay()}/${createdAt.getUTCMonth()}/${createdAt.getFullYear()} ${createdAt.getHours()}:${createdAt.getMinutes()} - ` +
+              "  " +
+              "</div>" +
+              " <strong>" +
+              message.author +
+              "</strong>: " +
+              message.message +
+              " </div>"
+          );
+        }
+
+        socket.on("receivedMessage", function (message) {
+          renderMessage(message);
+        });
+
+        socket.on("previousMessages", function (messages) {
+          for (message of messages) {
+            renderMessage(message);
+          }
+        });
+
+        $("#chat").submit(function (event) {
+          event.preventDefault();
+          var author = $("input[name=username]").val();
+          var message = $("input[name=message]").val();
+
+          if (author.length && message) {
+            var messageObject = {
+              author,
+              message,
+            };
+
+            socket.emit("sendMessage", messageObject);
+          }
+        });
+      </script>
+    </form>
+  </body>
+</html>
